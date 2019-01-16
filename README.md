@@ -14,6 +14,6 @@ Created on linux kernel 4.19
 
 Debian systems:
 
-sudo apt-get install build-essential linux-headers-`uname -r`
+sudo apt-get install build-essential linux-headers-\`uname -r\`
 
 
