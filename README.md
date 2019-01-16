@@ -1,3 +1,9 @@
 # firewall_reloaded
 
-A host-based linux firewall system similar to IPTables or nftables, using the netfilter framework to handle and respond to packets that require action based on rules defined within a configuration file determined by the user, starting with a packet filtering approach and moving towards more complex filtering strategies such as stateful analysis
+A host-based linux firewall system similar to IPTables or nftables.
+
+Uses the netfilter framework to handle and respond to packets that require action.
+
+Rules will be defined in a configuration file, and will be able to be changed through the command line. 
+
+The goal is to begin with a basic packet filtering approach, and move on to more complex filtering through methods such as stateful analysis. 
