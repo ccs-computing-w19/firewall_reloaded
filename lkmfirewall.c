@@ -12,6 +12,7 @@ MODULE_DESCRIPTION(DESC);
 static struct nf_hook_ops hk;
 
 unsigned int nf_hook_ex(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
+	printk(KERN_INFO "Packet dropped\n");
 	return NF_DROP;
 }
 
@@ -22,13 +23,12 @@ int init_module(void) {
 		.pf = PF_INET,
 		.priority = NF_IP_PRI_FIRST
 	};
-	nf_register_hook(&hk);
-
+	nf_register_net_hook(NULL,&hk);
 
 	return 0; // return status, tells if module is loaded
 }
 
 void cleanup_module(void) {
-	nf_unregister_hook(&hk); //disconnect our func handler
+	nf_unregister_net_hook(NULL, &hk); //disconnect our func handler
 }
 
