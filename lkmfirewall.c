@@ -2,6 +2,7 @@
 #include <linux/kernel.h> //For KERN_INFO
 #include <linux/netfilter.h>
 #include <linux/netfilter_ipv4.h>
+#include <linux/ip.h>
 #define AUTHOR "Garrett Lee <gjlee@ucsb.edu>"
 #define DESC "Basic firewall using netfilter framework"
 
@@ -23,12 +24,12 @@ int init_module(void) {
 		.pf = PF_INET,
 		.priority = NF_IP_PRI_FIRST
 	};
-	nf_register_net_hook(NULL,&hk);
+	nf_register_net_hook(&init_net,&hk);
 
 	return 0; // return status, tells if module is loaded
 }
 
 void cleanup_module(void) {
-	nf_unregister_net_hook(NULL, &hk); //disconnect our func handler
+	nf_unregister_net_hook(&init_net, &hk); //disconnect our func handler
 }
 
