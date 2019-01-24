@@ -24,8 +24,13 @@ module_param(ip, charp, 0);
 MODULE_PARM_DESC(ip, "IP to be blocked");
 
 unsigned int nf_hook_ex(void *priv, struct sk_buff *skb, const struct nf_hook_state *state) {
-	printk(KERN_INFO "Packet dropped\n");
-	return NF_DROP;
+	struct ethhdr *eth;
+	struct iphdr *ip_head;
+	eth = (struct ethhdr *)skb_mac_header(skb);
+	ip_head = (struct iphdr *)skb_network_header(skb);
+	printk(KERN_INFO "Source MAC: %pM, Dest. MAC %pM\n", eth->h_source, eth->h_dest);
+	printk(KERN_INFO "Source IP: %pI4\n", &ip_head->saddr);
+	return NF_ACCEPT;
 }
 
 int init_module(void) {
