@@ -19,9 +19,9 @@ sudo apt-get install build-essential linux-headers-\`uname -r\`
 **Run**
 
 make;
-sudo insmod lkmfirewall.ko options="`Enter IP or port`" ip="`Enter an IP addr`"
+sudo insmod lkmfirewall.ko ip="`Enter an IP addr`" port="`Enter a port`"
 
-**Remove**
+**Remove from running modules**
 
 sudo rmmod lkmfirewall
 
