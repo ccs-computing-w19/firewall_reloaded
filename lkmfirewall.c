@@ -8,12 +8,19 @@
 #include <linux/init.h>
 #include <linux/stat.h>
 #include <linux/list.h>
+#include <linux/proc_fs.h>
+#include <asm/uaccess.h>
+#include "lkmfirewall.h"
 #define AUTHOR "Garrett Lee <gjlee@ucsb.edu>"
 #define DESC "Basic firewall using netfilter framework"
+#define BUFSIZE 100
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR(AUTHOR);
 MODULE_DESCRIPTION(DESC);
+
+struct list_head rule_list;
+LIST_HEAD(rule_list); //Sets next and prev to itself
 
 struct rule {
 	unsigned int src_ip;
@@ -23,8 +30,45 @@ struct rule {
 	struct list_head list;
 };
 
-struct list_head rule_list;
-LIST_HEAD(rule_list); //Sets next and prev to itself
+static struct proc_dir_entry *ent;
+
+static ssize_t mywrite(struct file *file, const char __user *ubuf, size_t count, loff_t *ppos) {
+	int num, c;
+	char buf[BUFSIZE];
+	char ip[15];
+	unsigned int port[4];
+	if (*ppos > 0 || count > BUFSIZE) 
+		return -EFAULT;
+	if (copy_from_user(buf, ubuf, count))
+		return -EFAULT;
+	num = sscanf(buf, "%s %d", ip, &port);
+	if (num != 2)
+		return -EFAULT;
+	printk(KERN_INFO "New rule added");
+
+	struct rule *new_rule;
+	new_rule = kmalloc(sizeof(*new_rule), GFP_KERNEL);
+	new_rule->src_ip = inet_addr(ip);
+	new_rule->dest_port = port;
+	INIT_LIST_HEAD(&(new_rule->list));
+	list_add(&(new_rule->list), &rule_list);
+
+	c = strlen(buf);
+	printk(KERN_DEBUG "write handler\n");
+	return c;
+}
+
+static ssize_t myread(struct file *file, char __user *ubuf, size_t count, loff_t *ppos) {
+	printk(KERN_DEBUG "Read handler has not been implemented yet.\n");
+	return 0;
+}
+
+static struct file_operations myops = {
+	.owner = THIS_MODULE,
+	.read = myread,
+	.write = mywrite,
+};
+
 
 static struct nf_hook_ops hk;
 
@@ -112,19 +156,25 @@ unsigned int nf_hook_fn(void *priv, struct sk_buff *skb, const struct nf_hook_st
 
 int init_module(void) {
 
+	ent = proc_create("lkmfirewall", 0666, NULL, &myops);
+
 	printk(KERN_INFO "IP received is %s\n", ip);
 	printk(KERN_INFO "Port received is %d\n", port);
 
 	struct rule *options;
-       	options =  kmalloc(sizeof(*options), GFP_KERNEL);
-	if (options == NULL) {
-		printk(KERN_INFO "Error allocating memory");
-		return -1;
+	if (ip || port) {
+		options =  kmalloc(sizeof(*options), GFP_KERNEL);
+		if (options == NULL) {
+			printk(KERN_INFO "Error allocating memory");
+			return -1;
+		}
+	
+		if (ip) 
+			options->src_ip = inet_addr(ip);
+		options->dest_port = port;
+		INIT_LIST_HEAD(&(options->list));
+		list_add(&(options->list), &rule_list);
 	}
-	options->src_ip = inet_addr(ip);
-	options->dest_port = port;
-	INIT_LIST_HEAD(&(options->list));
-	list_add(&(options->list), &rule_list);
 
 	hk = (struct nf_hook_ops) {
 		.hook = nf_hook_fn,
@@ -139,5 +189,6 @@ int init_module(void) {
 
 void cleanup_module(void) {
 	nf_unregister_net_hook(&init_net, &hk); //disconnect our func handler
+	proc_remove(ent);
 }
 
