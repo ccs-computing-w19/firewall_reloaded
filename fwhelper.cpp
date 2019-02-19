@@ -30,21 +30,25 @@ int optionSelect() {
 int addRule() {
 	std::fstream outfile;
 	outfile.open("config.dat", std::ios::out | std::ios::app); //Open config file
+	std::fstream procfs;
+	procfs.open("/proc/lkmfirewall", std::ios::out | std::ios::app); //Opens proc file
 
-	if (outfile) {
+	if (outfile && procfs) {
 
 		std::string s;
 		std::cout << "Please input your rule in this format:\nSourceIP Port" << std::endl; //Need to determine format
 		std::cin.ignore();
 		std::getline(std::cin, s);
 		outfile << s << std::endl;
+		procfs << s << std::endl;
 
 		outfile.close();
+		procfs.close();
 
 	}
 	
 	else {
-		std::cerr << "Error opening config.data" << std::endl;
+		std::cerr << "Error opening config.dat or error with /proc/lkmfirewall" << std::endl;
 		exit(-1);
 	}
 

@@ -59,8 +59,22 @@ static ssize_t mywrite(struct file *file, const char __user *ubuf, size_t count,
 }
 
 static ssize_t myread(struct file *file, char __user *ubuf, size_t count, loff_t *ppos) {
-	printk(KERN_DEBUG "Read handler has not been implemented yet.\n");
-	return 0;
+	char buf[BUFSIZE * 10];
+	int len = 0;
+	if (*ppos > 0 || count < BUFSIZE)
+		return 0;
+	struct list_head *pos = NULL; //Determines which Node we are pointing at when we iterate
+	struct rule *dataptr = NULL;
+	int counter = 1;
+	list_for_each(pos, &rule_list) { //Iterates through all rules of the linked list
+		dataptr = list_entry(pos, struct rule, list); //Uses offset to obtain addr of our whole struct from the list_head address
+		len += sprintf(buf, "Rule %d - IP: %d Port %d\n", counter++, dataptr->src_ip, dataptr->dest_port);
+	}
+
+	if (copy_to_user(ubuf, buf, len))
+		return -EFAULT;
+	*ppos = len;
+	return len;
 }
 
 static struct file_operations myops = {
