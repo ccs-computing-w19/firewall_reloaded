@@ -44,7 +44,7 @@ static ssize_t mywrite(struct file *file, const char __user *ubuf, size_t count,
 	num = sscanf(buf, "%s %d", ip, &port);
 	if (num != 2)
 		return -EFAULT;
-	printk(KERN_INFO "New rule added");
+	printk(KERN_INFO "New rule added - IP: %s Port: %d\n", ip, port);
 
 	struct rule *new_rule;
 	new_rule = kmalloc(sizeof(*new_rule), GFP_KERNEL);
@@ -54,7 +54,6 @@ static ssize_t mywrite(struct file *file, const char __user *ubuf, size_t count,
 	list_add(&(new_rule->list), &rule_list);
 
 	c = strlen(buf);
-	printk(KERN_DEBUG "write handler\n");
 	return c;
 }
 
@@ -114,27 +113,26 @@ unsigned int nf_hook_fn(void *priv, struct sk_buff *skb, const struct nf_hook_st
 	struct tcphdr *tcp = NULL;
 	eth = (struct ethhdr *)skb_mac_header(skb);
 	ip_head = (struct iphdr *)skb_network_header(skb);
+	if (ip_head->protocol == IPPROTO_TCP) { //Checks if protocol is TCP
+		tcp = (struct tcphdr*)skb_transport_header(skb); //Puts data into a tcp header so we can look at L4 info
+	}
 	 
 	printk(KERN_INFO "Source MAC: %pM, Dest. MAC %pM\n", eth->h_source, eth->h_dest);
-	printk(KERN_INFO "Source IP: %pI4\n", &ip_head->saddr);
+	printk(KERN_INFO "Source IP: %pI4 \n", &ip_head->saddr);
 
 	struct list_head *pos = NULL; //Determines which Node we are pointing at when we iterate
 	struct rule *dataptr = NULL;
 	list_for_each(pos, &rule_list) { //Iterates through all rules of the linked list
 		dataptr = list_entry(pos, struct rule, list); //Uses offset to obtain addr of our whole struct from the list_head address
-		if (dataptr->src_ip) {
+		if (dataptr->src_ip) { //Checks if Node contains a valid IP
 
 			if (ip_head->saddr==dataptr->src_ip){ //Checks for matching IP address
 				printk(KERN_INFO "Rejecting packet with IP: %pI4\n",&ip_head->saddr);
 				return NF_DROP; //Drops the packet
 			}
-
-			if (ip_head->protocol == IPPROTO_TCP) { //Checks if protocol is TCP
-				tcp = (struct tcphdr*)skb_transport_header(skb); //Puts data into a tcp header so we can look at L4 info
-			}
 		}
 
-		if (dataptr->dest_port) {
+		if (dataptr->dest_port) { //Checks if Node contains a valid port 
 
 			if (tcp && tcp->dest==dataptr->dest_port) {
 				printk(KERN_INFO "Rejecting packet to port: %d", port);
