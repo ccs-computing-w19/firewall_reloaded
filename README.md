@@ -20,6 +20,7 @@ sudo apt-get install build-essential linux-headers-\`uname -r\`
 
 make;
 sudo insmod lkmfirewall.ko options="`Enter IP or port`" ip="`Enter an IP addr`"
+./fwhelper
 
 **Remove**
 
