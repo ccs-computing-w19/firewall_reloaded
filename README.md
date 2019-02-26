@@ -22,7 +22,11 @@ make;
 sudo insmod lkmfirewall.ko options="`Enter IP or port`" ip="`Enter an IP addr`"
 ./fwhelper
 
-**Remove**
+**Editing Rules**
+Run ./fwhelper and add/delete rules as needed
+The configuration file of config.dat can also be edited by itself where rules must be entered in the format of \`Source IP Port\`
+
+**Remove from Kernel**
 
 sudo rmmod lkmfirewall
 
