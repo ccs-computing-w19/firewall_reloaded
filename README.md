@@ -19,7 +19,13 @@ sudo apt-get install build-essential linux-headers-\`uname -r\`
 **Run**
 
 make;
-sudo insmod lkmfirewall.ko ip="`Enter an IP addr`" port="`Enter a port`"
+sudo insmod lkmfirewall.ko options="`Enter IP or port`" ip="`Enter an IP addr`"
+./fwhelper
+
+**Editing Rules**
+
+Run ./fwhelper and add/delete rules as needed
+The configuration file of config.dat can also be edited by itself where rules must be entered in the format of \`Source IP Port\`
 
 **Remove from running modules**
 

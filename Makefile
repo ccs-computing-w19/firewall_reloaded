@@ -1,10 +1,8 @@
 obj-m += lkmfirewall.o
 
-all:
+all: fwhelper.cpp
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-clean:
+	g++ -g fwhelper.cpp -o fwhelper
+clean: 
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-test:
-	sudo insmod lkmfirewall.ko
-	sudo rmmod lkmfirewall
-	dmesg
+	rm fwhelper config.dat
