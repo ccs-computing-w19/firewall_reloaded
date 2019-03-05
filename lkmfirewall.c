@@ -36,15 +36,15 @@ static ssize_t mywrite(struct file *file, const char __user *ubuf, size_t count,
 	int num, c;
 	char buf[BUFSIZE];
 	char ip[15];
-	unsigned int port[4];
+	unsigned int port;
 	if (*ppos > 0 || count > BUFSIZE) 
 		return -EFAULT;
 	if (copy_from_user(buf, ubuf, count))
 		return -EFAULT;
-	num = sscanf(buf, "%s %d", ip, &port);
+	num = sscanf(buf, "%s %u\n", ip, &port);
 	if (num != 2)
 		return -EFAULT;
-	printk(KERN_INFO "New rule added - IP: %s Port: %d\n", ip, port);
+	printk(KERN_INFO "New rule added - IP: %s Port: %u\n", ip, port);
 
 	struct rule *new_rule;
 	new_rule = kmalloc(sizeof(*new_rule), GFP_KERNEL);
@@ -67,7 +67,7 @@ static ssize_t myread(struct file *file, char __user *ubuf, size_t count, loff_t
 	int counter = 1;
 	list_for_each(pos, &rule_list) { //Iterates through all rules of the linked list
 		dataptr = list_entry(pos, struct rule, list); //Uses offset to obtain addr of our whole struct from the list_head address
-		len += sprintf(buf, "Rule %d - IP: %d Port %d\n", counter++, dataptr->src_ip, dataptr->dest_port);
+		len += sprintf(buf, "Rule %d - IP: %d Port %u\n", counter++, dataptr->src_ip, dataptr->dest_port);
 	}
 
 	if (copy_to_user(ubuf, buf, len))
@@ -135,7 +135,7 @@ unsigned int nf_hook_fn(void *priv, struct sk_buff *skb, const struct nf_hook_st
 		if (dataptr->dest_port) { //Checks if Node contains a valid port 
 
 			if (tcp && tcp->dest==dataptr->dest_port) {
-				printk(KERN_INFO "Rejecting packet to port: %d", port);
+				printk(KERN_INFO "Rejecting packet to port: %u", port);
 				return NF_DROP;
 			}
 		}
@@ -171,7 +171,7 @@ int init_module(void) {
 	ent = proc_create("lkmfirewall", 0666, NULL, &myops);
 
 	printk(KERN_INFO "IP received is %s\n", ip);
-	printk(KERN_INFO "Port received is %d\n", port);
+	printk(KERN_INFO "Port received is %u\n", port);
 
 	struct rule *options;
 	if (ip || port) {
